@@ -166,7 +166,7 @@
             android:background="?android:attr/listDivider" />
 
         <Button
-            android:id="@+id/thuesdayButton"
+            android:id="@+id/thursdayButton"
             style="?attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -239,7 +239,7 @@
         app:layout_constraintTop_toBottomOf="@+id/divider11" />
 
     <Switch
-        android:id="@+id/switch1"
+        android:id="@+id/vibroSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"

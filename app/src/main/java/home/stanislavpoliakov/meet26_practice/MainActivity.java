@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
         //super.onActivityResult(requestCode, resultCode, data);
         //Log.d(TAG, "onActivityResult: ");
         if (data != null) {
-            alarm = new Alarm(data.getLongExtra("start", 0));
+            alarm = new Alarm(data.getLongExtra("start", 0), data.getStringExtra("repeatString"));
             if (requestCode == CREATE_REQUEST) {
 
 
@@ -267,6 +267,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
         updateAlarm.putExtra("id", alarm.id)
                 .putExtra("start", alarm.getStart().getTimeInMillis())
                 .putExtra("repeatIn", alarm.getRepeatIn())
+                .putExtra("repeatString", alarm.getRepeatString())
                 .putExtra("vibro", alarm.isVibro())
                 .putExtra("enabled", alarm.isEnabled())
                 .putExtra("requestCode", UPDATE_REQUEST);

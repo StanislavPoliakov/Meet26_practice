@@ -15,6 +15,7 @@ import java.util.Set;
 public final class ConvertUtils {
     private static final String START = "start";
     private static final String REPEAT_IN = "repeat_in";
+    private static final String REPEAT_STRING = "repeat_string";
     private static final String ID = "id";
     private static final String VIBRO = "vibro";
     private static final String ENABLED = "enabled";
@@ -29,10 +30,11 @@ public final class ConvertUtils {
         int id = contentValues.getAsInteger(ID);
         long startInMillis = contentValues.getAsLong(START);
         int repeatIn = contentValues.getAsInteger(REPEAT_IN);
+        String repeatString = contentValues.getAsString(REPEAT_STRING);
         boolean vibro = contentValues.getAsBoolean(VIBRO);
         boolean enabled = contentValues.getAsBoolean(ENABLED);
 
-        Alarm alarm = new Alarm(startInMillis);
+        Alarm alarm = new Alarm(startInMillis, repeatString);
         alarm.id = id;
         alarm.setRepeatIn(repeatIn);
         alarm.setVibro(vibro);
@@ -52,6 +54,7 @@ public final class ConvertUtils {
         contentValues.put(ID, alarm.id);
         contentValues.put(START, alarm.getStart().getTimeInMillis());
         contentValues.put(REPEAT_IN, alarm.getRepeatIn());
+        contentValues.put(REPEAT_STRING, alarm.getRepeatString());
         contentValues.put(VIBRO, alarm.isVibro());
         contentValues.put(ENABLED, alarm.isEnabled());
 
@@ -78,6 +81,7 @@ public final class ConvertUtils {
             int id = cursor.getInt(cursor.getColumnIndex(ID));
             long start = cursor.getLong(cursor.getColumnIndex(START));
             int repeatIn = cursor.getInt(cursor.getColumnIndex(REPEAT_IN));
+            String repeatString = cursor.getString(cursor.getColumnIndex(REPEAT_STRING));
 
             int value = cursor.getInt(cursor.getColumnIndex(VIBRO));
             boolean vibro = (value == 1) ? Boolean.TRUE : Boolean.FALSE;
@@ -85,7 +89,7 @@ public final class ConvertUtils {
             value = cursor.getInt(cursor.getColumnIndex(ENABLED));
             boolean enabled = (value == 1) ? Boolean.TRUE : Boolean.FALSE;
 
-            Alarm alarm = new Alarm(start);
+            Alarm alarm = new Alarm(start, repeatString);
             alarm.id = id;
             alarm.setRepeatIn(repeatIn);
             alarm.setVibro(vibro);

@@ -5,19 +5,27 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 public class AlarmActivity extends AppCompatActivity {
     private static final String TAG = "meet26_logs";
@@ -26,8 +34,16 @@ public class AlarmActivity extends AppCompatActivity {
     private Calendar timestamp;
     private TextView dateLabel;
     private boolean vibro, enabled;
-    private int repeatIn;
+    private String repeatString;
+    //private int repeatIn;
+    private MutableLiveData<Integer> repeatIn = new MutableLiveData<>();
     private DatePickerDialog datePickerDialog;
+
+    private int defaultColor;
+    private int pressedColor = Color.RED;
+    private List<Button> buttons = new ArrayList<>();
+
+    private String[] daysOfWeek = {"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"};
 
     // Время будильника, устанавливаемое в Activity, будем отслеживать и сразу отображать
     private MutableLiveData<Calendar> alarmDate = new MutableLiveData<>();
@@ -69,6 +85,14 @@ public class AlarmActivity extends AppCompatActivity {
 
         // Получаем текущую временную точку
         timestamp = Calendar.getInstance();
+        repeatIn.setValue(0);
+
+        // LiveData
+        Observer<Calendar> observer = this::updateLabel;
+        alarmDate.observe(this, observer);
+
+        Observer<Integer> observerInt = this::setRepeat;
+        repeatIn.observe(this, observerInt);
 
         // И еще одну временную точку - шаблон для будильника
         Calendar alarm = Calendar.getInstance();
@@ -76,17 +100,23 @@ public class AlarmActivity extends AppCompatActivity {
             Intent intent = getIntent();
 
             alarm.setTimeInMillis(intent.getLongExtra("start", 0));
-            repeatIn = intent.getIntExtra("repeatIn", 0);
+            //repeatIn = intent.getIntExtra("repeatIn", 0);
+            repeatIn.setValue(intent.getIntExtra("repeatIn", 0));
+            repeatString = intent.getStringExtra("repeatString");
             vibro = intent.getBooleanExtra("vibro", false);
             enabled = intent.getBooleanExtra("enabled", false);
         }
         alarmDate.setValue(alarm);
 
-        // LiveData
-        Observer<Calendar> observer = this::updateLabel;
-        alarmDate.observe(this, observer);
+
 
         dateLabel = findViewById(R.id.dateLabel);
+
+        Switch vibroSwitch = findViewById(R.id.vibroSwitch);
+        vibroSwitch.setChecked(vibro);
+        vibroSwitch.setOnClickListener(v -> vibro = !vibro);
+
+        initRepeatButtons();
 
         Button cancelButton = findViewById(R.id.cancelButton);
         cancelButton.setOnClickListener(view -> {
@@ -98,9 +128,10 @@ public class AlarmActivity extends AppCompatActivity {
         saveButton.setOnClickListener(view -> {
             Intent result = new Intent();
             result.putExtra("start", alarmDate.getValue().getTimeInMillis());
-            result.putExtra("repeatIn", repeatIn);
+            result.putExtra("repeatIn", repeatIn.getValue());
             result.putExtra("vibro", vibro);
             result.putExtra("enabled", enabled);
+            result.putExtra("repeatString", dateLabel.getText().toString());
             if (requestCode == MainActivity.UPDATE_REQUEST)
                 result.putExtra("id", getIntent().getIntExtra("id", -1));
             setResult(requestCode, result);
@@ -108,6 +139,62 @@ public class AlarmActivity extends AppCompatActivity {
         });
 
         initPicker(requestCode);
+    }
+
+    private View.OnClickListener weekButtonListener = v -> {
+        Button button = (Button) v;
+        //Log.d(TAG, "default = " + defaultColor);
+        int color = button.getTextColors().getDefaultColor();
+        int sign = (color == pressedColor) ? 0 : 1;
+        //Log.d(TAG, "pressed = " + pressedColor);
+
+        button.setTextColor((color == pressedColor) ? defaultColor : pressedColor);
+        String btnText = button.getText().toString();
+        int offset = 6 - Arrays.asList(daysOfWeek).indexOf(btnText);
+        Log.d(TAG, "offset = " + offset);
+
+        int repeat = repeatIn.getValue();
+        if (sign == 1) repeat |= (sign << offset);
+        else {
+            repeat = ~repeat;
+            repeat |= (1 << offset);
+            repeat = ~repeat;
+        }
+        repeatIn.setValue(repeat);
+        //Log.d(TAG, "repeatIn = " + repeatIn);
+    };
+
+    private void initRepeatButtons() {
+        Button mondayButton = findViewById(R.id.mondayButton);
+        buttons.add(mondayButton);
+        defaultColor = mondayButton.getTextColors().getDefaultColor();
+
+        Button tuesdayButton = findViewById(R.id.tuesdayButton);
+        buttons.add(tuesdayButton);
+        Button wednesdayButton = findViewById(R.id.wednesdayButton);
+        buttons.add(wednesdayButton);
+        Button thursdayButton = findViewById(R.id.thursdayButton);
+        buttons.add(thursdayButton);
+        Button fridayButton = findViewById(R.id.fridayButton);
+        buttons.add(fridayButton);
+        Button saturdayButton = findViewById(R.id.saturdayButton);
+        buttons.add(saturdayButton);
+        Button sundayButton = findViewById(R.id.sundayButton);
+        buttons.add(sundayButton);
+
+        buttons.stream()
+                .map(b -> {
+                    if (repeatString.contains(b.getText().toString())) b.setTextColor(pressedColor);
+                    return b;
+                }).forEach(b -> b.setOnClickListener(weekButtonListener));
+
+        /*mondayButton.setOnClickListener(weekButtonListener);
+        tuesdayButton.setOnClickListener(weekButtonListener);
+        wednesdayButton.setOnClickListener(weekButtonListener);
+        thursdayButton.setOnClickListener(weekButtonListener);
+        fridayButton.setOnClickListener(weekButtonListener);
+        saturdayButton.setOnClickListener(weekButtonListener);
+        sundayButton.setOnClickListener(weekButtonListener);*/
     }
 
     /**
@@ -123,8 +210,31 @@ public class AlarmActivity extends AppCompatActivity {
 
         // Форматируем дату в соответствии с нужным паттерном
         SimpleDateFormat format = new SimpleDateFormat("dd MMMM в HH:mm", ruLocale);
+        if (repeatIn.getValue() == 0) dateLabel.setText(format.format(value.getTime()));
+        /*else {
+            String binary = Integer.toBinaryString(repeatIn.getValue());
+            StringJoiner joiner = new StringJoiner(",");
+            for (int i = 0; i < binary.length(); i++) {
+                if (binary.charAt(i) == 1) joiner.add(daysOfWeek[i]);
+            }
+            dateLabel.setText(joiner.toString());
+        }*/
+    }
 
-        dateLabel.setText(format.format(value.getTime()));
+    private void setRepeat(int repeat) {
+        if (repeat == 0) {
+            updateLabel(alarmDate.getValue());
+            return;
+        }
+        String binary = Integer.toBinaryString(repeat);
+        StringJoiner joiner = new StringJoiner(", ");
+        for (int i = 0; i < binary.length(); i++) {
+            int offset = daysOfWeek.length - binary.length();
+            if (binary.charAt(i) == '1') joiner.add(daysOfWeek[i + offset]);
+            //Log.d(TAG, "setRepeat: day = " + daysOfWeek[i + offset]);
+            //Log.d(TAG, "setRepeat: joiner = " + binary);
+        }
+        dateLabel.setText(joiner.toString());
     }
 
     /**

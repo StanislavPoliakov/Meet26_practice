@@ -61,7 +61,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
         holder.alarmSwitch.setChecked(alarm.isEnabled());
         holder.timeLabel.setText(dateFormat.format(alarmStart.getTime()));
-        holder.repeatLabel.setText(String.valueOf(alarm.id));
+        holder.repeatLabel.setText(String.valueOf(alarm.getRepeatString()));
     }
 
     @Override

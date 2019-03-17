@@ -23,14 +23,26 @@ public class Alarm {
     @ColumnInfo(name = "repeat_in")
     private int repeatIn;
 
+    @ColumnInfo(name = "repeat_string")
+    private String repeatString;
+
     private boolean vibro;
     private boolean enabled;
 
-    public Alarm(long start) {
+    public Alarm(long start, String repeatString) {
         this.start = start;
+        this.repeatString = repeatString;
         this.repeatIn = 0;
         this.vibro = false;
         this.enabled = true;
+    }
+
+    public String getRepeatString() {
+        return this.repeatString;
+    }
+
+    public void setRepeatString(String repeatString) {
+        this.repeatString = repeatString;
     }
 
     public void update(Calendar alarm) {
