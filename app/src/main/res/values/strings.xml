@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Будильник (Meet26_practice)</string>
+    <string name="action_settings">Settings</string>
+    <string name="no_alarms_value">Нет будильников</string>
+    <string name="cancel_button">ОТМЕНИТЬ</string>
+    <string name="save_button">СОХРАНИТЬ</string>
+    <string name="date_button">Дата</string>
+    <string name="repeat_label">Повторить</string>
+    <string name="vibro_label">Вибрация</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
