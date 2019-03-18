@@ -10,7 +10,6 @@ import android.util.Log;
 
 public class MyContentProvider extends ContentProvider {
     private static final String TAG = "meet26_logs";
-    //private AlarmDatabase mDatabase;
     private AlarmDAO dao;
     private static final String AUTHORITY = "content_provider";
     private static final String ENTRIES_TABLE = "alarm_database";
@@ -27,6 +26,10 @@ public class MyContentProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, ENTRIES_TABLE + "/#", ENTRY_ID);
     }
 
+    /**
+     * Метод инициализации начальных значений
+     * @return true :)
+     */
     @Override
     public boolean onCreate() {
         AlarmDatabase mDatabase = Room.databaseBuilder(getContext(), AlarmDatabase.class, "alarms")
@@ -35,6 +38,7 @@ public class MyContentProvider extends ContentProvider {
         dao = mDatabase.getAlarmDAO();
         return mDatabase != null;
     }
+
 
     @Override
     public Cursor query( Uri uri, String[] projection, String selection,
@@ -46,13 +50,7 @@ public class MyContentProvider extends ContentProvider {
         }
         else throw new UnsupportedOperationException("Illegal URI(" + uri + ")");
 
-        cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
-    }
-
-    @Override
-    public String getType(Uri uri) {
-        return null;
     }
 
     @Override
@@ -61,33 +59,9 @@ public class MyContentProvider extends ContentProvider {
         long id;
         if (uriType == ENTRY_ID) {
             id = dao.insert(ConvertUtils.convertValuesToAlarm(values));
-            //Log.d(TAG, "insert: id = " + id);
         } else throw new UnsupportedOperationException("Illegal URI(" + uri + ")");
 
-        getContext().getContentResolver().notifyChange(uri, null);
-
         return Uri.parse(CONTENT_URI + "/" + id);
-    }
-
-    @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
-        int uriType = uriMatcher.match(uri);
-        int rowsDeleted;
-        if (uriType == ENTRY_ID) {
-            String stringID = uri.getLastPathSegment();
-            int id = Integer.parseInt(stringID);
-            //Log.d(TAG, "delete: ID = " + id);
-            rowsDeleted = dao.delete(id);
-            //Log.d(TAG, "delete: Rows Deleted = " + rowsDeleted);
-        }
-        else throw new UnsupportedOperationException("Illegal URI(" + uri + ")");
-
-        //Log.d(TAG, "delete: URI = " + uri);
-        getContext().getContentResolver().notifyChange(uri, null);
-
-        Log.d(TAG, "delete: rowsdeleted = " + rowsDeleted);
-        return rowsDeleted;
-        //return 0;
     }
 
     @Override
@@ -99,9 +73,25 @@ public class MyContentProvider extends ContentProvider {
         }
         else throw new UnsupportedOperationException("Illegal URI(" + uri + ")");
 
-        getContext().getContentResolver().notifyChange(uri, null);
-
         return rowsUpdated;
-        //return 0;
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        int uriType = uriMatcher.match(uri);
+        int rowsDeleted;
+        if (uriType == ENTRY_ID) {
+            String stringID = uri.getLastPathSegment();
+            int id = Integer.parseInt(stringID);
+            rowsDeleted = dao.delete(id);
+        }
+        else throw new UnsupportedOperationException("Illegal URI(" + uri + ")");
+
+        return rowsDeleted;
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        return null;
     }
 }

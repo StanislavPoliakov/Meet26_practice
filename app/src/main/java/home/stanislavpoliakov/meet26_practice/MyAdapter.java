@@ -52,10 +52,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         Calendar alarmStart = alarm.getStart();
         int repeatIn = alarm.getRepeatIn();
 
-        //StringBuilder time = new StringBuilder();
-        /*time.append(alarmStart.get(Calendar.HOUR_OF_DAY))
-                .append(":")
-                .append(alarmStart.get(Calendar.MINUTE));*/
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
 
@@ -79,7 +75,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
             repeatLabel = itemView.findViewById(R.id.repeatLabel);
             alarmSwitch = itemView.findViewById(R.id.alarmSwitch);
 
-            itemView.setOnClickListener(v -> mActivity.itemSelected(alarmList.get(getAdapterPosition())));
+            //itemView.setOnClickListener(v -> mActivity.itemSelected(alarmList.get(getAdapterPosition())));
+            itemView.setOnClickListener(v -> mActivity.itemSelected(getAdapterPosition()));
 
             itemView.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
                     //Alarm alarm = alarmList.get(getAdapterPosition());

@@ -66,9 +66,9 @@ public final class ConvertUtils {
      * базы данных (SELECT * FROM entries) в список записей, который мы отправляем в Handler, а
      * затем в Activity при инициализации RecyclerView, а затем при отрисовке RecyclerView
      * @param cursor объект Cursor со списком найденных элементов базы данных
-     * @return список записей в формате List<Entry>
+     * @return список записей в формате ArraySet<Alarm>
      */
-    public static ArraySet<Alarm> convertCursorToAlarmsSet(Cursor cursor) {
+    public static ArraySet<Alarm> convertCursorToAlarmSet(Cursor cursor) {
         ArraySet<Alarm> alarmSet = new ArraySet<>();
 
         // Перемещаем значение курсора в начало
@@ -96,14 +96,6 @@ public final class ConvertUtils {
             alarm.setEnabled(enabled);
 
             alarmSet.add(alarm);
-
-            /*String title = cursor.getString(cursor.getColumnIndex("title"));
-            String text = cursor.getString(cursor.getColumnIndex("entry_text"));
-            int id = cursor.getInt(cursor.getColumnIndex("id"));
-
-            // Создаем новый объект Entry по считанным значениям и добавляем в список записей
-            Entry entry = new Entry(title, text, id);*/
-            //entryList.add(entry);
 
             // Передвигаем курсор к следующей записи найденного списка
             cursor.moveToNext();

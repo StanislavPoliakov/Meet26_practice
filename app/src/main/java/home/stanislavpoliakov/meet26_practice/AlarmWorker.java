@@ -31,49 +31,40 @@ public class AlarmWorker extends Worker {
         else return Result.success();
     }
 
+    /**
+     * Метод запланированной работы
+     * @return
+     */
     private String alarmWork() {
-        //Toast.makeText(context, "БУДИЛЬНИК!!!", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "alarmWork: ALARM AT WORK!!!");
+        //Log.d(TAG, "alarmWork: ALARM AT WORK!!!");
         makeNotification();
         return "Alarm at work!";
     }
 
+    /**
+     * Делаем нотик в для отображения в момент работы будильника
+     */
     private void makeNotification() {
-        int NOTIFICATION_ID = 234;
+        int NOTIFICATION_ID = 1;
 
-        Context ctx = getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         String CHANNEL_ID = "1";
 
+        // API > 26 - создаем Channel
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 
             CHANNEL_ID = "my_channel_01";
             CharSequence name = "my_channel";
-            //String Description = "This is my channel";
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
-            //mChannel.setDescription(Description);
-            /*mChannel.enableLights(true);
-            mChannel.setLightColor(Color.RED);
-            mChannel.enableVibration(true);
-            mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
-            mChannel.setShowBadge(false);*/
             notificationManager.createNotificationChannel(mChannel);
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("title")
-                .setContentText("message");
-
-        /*Intent resultIntent = new Intent(ctx, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(ctx);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        builder.setContentIntent(resultPendingIntent);*/
+                .setContentTitle("Будильник")
+                .setContentText("Вставайте, граф! Вас ждут великие дела!");
 
         notificationManager.notify(NOTIFICATION_ID, builder.build());
     }

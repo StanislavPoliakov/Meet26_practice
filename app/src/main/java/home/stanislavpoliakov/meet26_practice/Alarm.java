@@ -5,6 +5,7 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
+import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -94,7 +95,7 @@ public class Alarm {
     @Override
     public int hashCode() {
         int result = Long.hashCode(start / 60000);
-        result += 31 * repeatIn;
+        result += 31 * Integer.hashCode(repeatIn);
         return result;
     }
 
