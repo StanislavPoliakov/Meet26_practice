@@ -1,15 +1,23 @@
 package home.stanislavpoliakov.meet26_practice;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,10 +30,15 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static home.stanislavpoliakov.meet26_practice.ConvertUtils.convertAlarmToValues;
@@ -145,6 +158,17 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                 alarm.setVibro(data.getBooleanExtra("vibro", false));
                 alarm.setEnabled(data.getBooleanExtra("enabled", false));
 
+                //PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS = 15 * 60 * 1000L = 15 минут :)
+                PeriodicWorkRequest alarmWorkRequest = new PeriodicWorkRequest.Builder(AlarmWorker.class, 1, TimeUnit.SECONDS)
+                        .build();
+
+                OneTimeWorkRequest alarmWorkRequestOneTime = new OneTimeWorkRequest.Builder(AlarmWorker.class)
+                        //.setInitialDelay(5, TimeUnit.SECONDS)
+                        .build();
+
+                WorkManager.getInstance().cancelAllWork();
+                //WorkManager.getInstance().enqueue(alarmWorkRequest);
+
                 if (!alarmSet.getValue().contains(alarm)) updateAlarm(alarm);
                 else {
                     Toast.makeText(this,
@@ -152,8 +176,48 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                     alarm = null;
                 }
             }
+            /*NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext(), "main")
+                    .setContentTitle("New")
+                    .setContentText("ALARM!")
+                    .setSmallIcon(R.drawable.ic_launcher_background);
+            Notification notification = mBuilder.build();
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.notify(1, notification);*//*
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle("Title")
+                            .setContentText("Notification text");
+
+            Notification notification = builder.build();
+
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+
+                String CHANNEL_ID = "my_channel_01";
+                CharSequence name = "my_channel";
+                String Description = "This is my channel";
+                int importance = NotificationManager.IMPORTANCE_HIGH;
+                NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
+                mChannel.setDescription(Description);
+                mChannel.enableLights(true);
+                mChannel.setLightColor(Color.RED);
+                mChannel.enableVibration(true);
+                mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+                mChannel.setShowBadge(false);
+                notificationManager.createNotificationChannel(mChannel);
+            }
+
+
+            notificationManager.notify(1, notification);*/
+            //makeNotification();
         }
     }
+
+
 
     private void updateAlarm(Alarm alarm) {
         Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + ENTRIES_TABLE + "/" + alarm.id);

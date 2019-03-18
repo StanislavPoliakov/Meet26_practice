@@ -6,11 +6,12 @@ import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Класс Будильника
+ */
 @Entity (tableName = "alarms", indices = @Index("id"))
 public class Alarm {
     @Ignore private static final String TAG = "meet26_logs";
@@ -18,17 +19,28 @@ public class Alarm {
     @PrimaryKey (autoGenerate = true)
     public int id;
 
+    // Время начала работы будильника (Date + Time) = getTimeInMillis
     public long start;
 
+    // Битовая маска для повтора будильника
     @ColumnInfo(name = "repeat_in")
     private int repeatIn;
 
+    // Результат парсинга битовой маски - здесь просто для удобства
     @ColumnInfo(name = "repeat_string")
     private String repeatString;
 
+    // Включить вибрацию?
     private boolean vibro;
+
+    // Включен ли будильник?
     private boolean enabled;
 
+    /**
+     * Будильник создаем по времени начала и строкове "повторений"
+     * @param start момент начала работы будильника
+     * @param repeatString паттерн повторений работы будильника
+     */
     public Alarm(long start, String repeatString) {
         this.start = start;
         this.repeatString = repeatString;
@@ -39,14 +51,6 @@ public class Alarm {
 
     public String getRepeatString() {
         return this.repeatString;
-    }
-
-    public void setRepeatString(String repeatString) {
-        this.repeatString = repeatString;
-    }
-
-    public void update(Calendar alarm) {
-        this.start = alarm.getTimeInMillis();
     }
 
     @Ignore
@@ -80,14 +84,26 @@ public class Alarm {
         return this.repeatIn;
     }
 
+    /**
+     * Переопределяем HashCode для сравнений в ArraySet
+     * В значении момента убираем милисекунды (х1000) и секунды (х60)
+     * Значимые поля - start и repeatIn
+     * @return hashCode
+     */
     @Ignore
     @Override
     public int hashCode() {
         int result = Long.hashCode(start / 60000);
-        result += 32 * repeatIn;
+        result += 31 * repeatIn;
         return result;
     }
 
+    /**
+     * Переопределяем Equals для сравнений в ArraySet
+     * Значимые поля - start и repeatIn
+     * @param obj объект сравнения
+     * @return результат сравнения
+     */
     @Ignore
     @Override
     public boolean equals(Object obj) {
