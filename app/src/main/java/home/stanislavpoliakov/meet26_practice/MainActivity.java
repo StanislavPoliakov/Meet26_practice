@@ -15,27 +15,29 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.ArraySet;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Calendar;
+import java.util.LongSummaryStatistics;
 import java.util.stream.Collectors;
 
+//import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.makeSingleWork;
 import static home.stanislavpoliakov.meet26_practice.ConvertUtils.convertAlarmToValues;
 import static home.stanislavpoliakov.meet26_practice.ConvertUtils.convertCursorToAlarmSet;
+import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.makeRepeatDateSet;
+import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.makeWorkChain;
 
 public class MainActivity extends AppCompatActivity implements ICallback{
     private static final String TAG = "meet26_logs";
     private static final String AUTHORITY = "content_provider";
     private static final String ENTRIES_TABLE = "alarm_database";
+    private WorkManager workManager = WorkManager.getInstance();
 
     public static final int CREATE_REQUEST = 1;
     public static final int UPDATE_REQUEST = 2;
@@ -206,8 +208,74 @@ public class MainActivity extends AppCompatActivity implements ICallback{
         alarm = alarmSet.getValue().valueAt(position);
         alarm.setEnabled(!alarm.isEnabled());
 
+        if (alarm.isEnabled()) scheduleWork(alarm);
+        else clearWork(alarm);
+
         // Инициируем обновление
         updateAlarm(alarm);
+    }
+
+    private void scheduleWork(Alarm alarm) {
+        String tag = alarm.getTag();
+        boolean isPeriodic = alarm.getRepeatIn() != 0;
+
+        /*if (alarm.getRepeatIn() != 0) {
+
+            LongSummaryStatistics summary = makeRepeatDateSet(alarm).stream()
+                    .peek(date -> makeWorkChain(date, tag, isPeriodic))
+                    .collect(Collectors.summarizingLong(Calendar::getTimeInMillis));
+
+            makeToast(summary.getMin());
+        } else {
+            makeSingleWork(alarm.getStart(), alarm.getTag());
+            makeToast(alarm.getStart().getTimeInMillis());
+        }*/
+
+        //start.set
+
+        LongSummaryStatistics summary = makeRepeatDateSet(alarm).stream()
+                .peek(date -> makeWorkChain(date, tag, isPeriodic))
+                .collect(Collectors.summarizingLong(Calendar::getTimeInMillis));
+
+        makeToast(summary.getMin());
+    }
+
+
+
+    private void makeToast(long startTime) {
+        Calendar moment = Calendar.getInstance();
+
+        long delay = (startTime - moment.getTimeInMillis()) / 1000;
+
+        long seconds = delay % 60;
+        delay /= 60;
+
+        long minutes = delay % 60;
+        delay /= 60;
+
+        long hours = delay % 24;
+        delay /= 24;
+
+        long days = delay % 365;
+
+        StringBuilder toastBuilder = new StringBuilder("Будильник сработает через: ");
+
+        if (days == 0 && hours == 0 && minutes == 0)
+            toastBuilder.append(seconds).append(" секунд");
+        else if (days == 0 && hours == 0)
+            toastBuilder.append(minutes).append(" минут и ").append(seconds).append(" секунд");
+        else if (days == 0)
+            toastBuilder.append(hours).append(" часов и ").append(minutes).append(" минут");
+        else
+            toastBuilder.append(days).append(" дней, ").append(hours).append(" часов и ").append(minutes).append(" минут");
+
+        Toast.makeText(this, toastBuilder.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+
+
+    private void clearWork(Alarm alarm) {
+        workManager.cancelAllWorkByTag(alarm.getTag());
     }
 
     /**
@@ -231,7 +299,10 @@ public class MainActivity extends AppCompatActivity implements ICallback{
             if (requestCode == CREATE_REQUEST) {
 
                 // Если множество содержит такой будильник (здравствуй, Equals и HashCode), то добавить в базу
-                if (!alarmSet.getValue().contains(alarm)) insertAlarm(alarm);
+                if (!alarmSet.getValue().contains(alarm)) {
+                    insertAlarm(alarm);
+                    scheduleWork(alarm);
+                }
                 else {
                     Toast.makeText(this,
                             "Будильник с такими параметрами уже существует", Toast.LENGTH_SHORT).show();
@@ -243,17 +314,6 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                 alarm.setRepeatIn(data.getIntExtra("repeatIn", 0));
                 alarm.setVibro(data.getBooleanExtra("vibro", false));
                 alarm.setEnabled(data.getBooleanExtra("enabled", false));
-
-                //PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS = 15 * 60 * 1000L = 15 минут :)
-                /*PeriodicWorkRequest alarmWorkRequest = new PeriodicWorkRequest.Builder(AlarmWorker.class, 1, TimeUnit.SECONDS)
-                        .build();
-
-                OneTimeWorkRequest alarmWorkRequestOneTime = new OneTimeWorkRequest.Builder(AlarmWorker.class)
-                        //.setInitialDelay(5, TimeUnit.SECONDS)
-                        .build();
-
-                WorkManager.getInstance().cancelAllWork();
-                //WorkManager.getInstance().enqueue(alarmWorkRequest);*/
 
                 // Если изменный будильник уникален - обновить запись
                 if (!alarmSet.getValue().contains(alarm)) updateAlarm(alarm);

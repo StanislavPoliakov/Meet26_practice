@@ -61,6 +61,11 @@ public class Alarm {
         return alarm;
     }
 
+    @Ignore
+    public String getTag () {
+        return "Alarm #" + id;
+    }
+
     public void setEnabled(boolean state) {
         this.enabled = state;
     }

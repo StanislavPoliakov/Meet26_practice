@@ -357,6 +357,9 @@ public class AlarmActivity extends AppCompatActivity {
             calendar.set(Calendar.HOUR_OF_DAY, hour);
             calendar.set(Calendar.MINUTE, minute);
 
+            // Поскольку время мы берем "поминутно" - устанавливаем количество секунд в "0"
+            calendar.set(Calendar.SECOND, 0);
+
             alarmDate.setValue(calendar);
         });
 
