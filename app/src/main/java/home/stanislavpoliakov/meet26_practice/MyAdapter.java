@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -50,10 +49,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         Alarm alarm = alarmList.get(position);
 
         Calendar alarmStart = alarm.getStart();
-        int repeatIn = alarm.getRepeatIn();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-
 
         holder.alarmSwitch.setChecked(alarm.isEnabled());
         holder.timeLabel.setText(dateFormat.format(alarmStart.getTime()));
@@ -75,14 +72,15 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
             repeatLabel = itemView.findViewById(R.id.repeatLabel);
             alarmSwitch = itemView.findViewById(R.id.alarmSwitch);
 
-            //itemView.setOnClickListener(v -> mActivity.itemSelected(alarmList.get(getAdapterPosition())));
+            // Устанавливаем обработчик нажатий на элемент списка (для обновления будильника)
             itemView.setOnClickListener(v -> mActivity.itemSelected(getAdapterPosition()));
 
+            // Устанавилваем обработчик создания контекстного меню (по долгому нажатию)
             itemView.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
-                    //Alarm alarm = alarmList.get(getAdapterPosition());
                     menu.add(0, getAdapterPosition(), 0, "Delete");
             });
 
+            // Устанавливаем обработчик нажатия на выключатель будильника
             alarmSwitch.setOnClickListener(v -> {
                 mActivity.switchChange(getAdapterPosition());
             });

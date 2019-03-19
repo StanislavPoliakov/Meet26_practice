@@ -207,13 +207,23 @@ public class MainActivity extends AppCompatActivity implements ICallback{
     @Override
     public void switchChange(int position) {
         alarm = alarmSet.getValue().valueAt(position);
-        alarm.setEnabled(!alarm.isEnabled());
 
-        if (alarm.isEnabled()) scheduleWork(alarm);
-        else clearWork(alarm);
+        // Если время будильника прошло, то при попытке изменить положение выключателя
+        // вызвать предупреждение и заблокировать переключатель в "Выключено"
+        if (alarm.getStart().getTimeInMillis() < Calendar.getInstance().getTimeInMillis()) {
+            Toast.makeText(this, "Alarm expired!", Toast.LENGTH_SHORT).show();
+            alarm.setEnabled(false);
 
+            // Если время не прошло
+        } else {
+            alarm.setEnabled(!alarm.isEnabled());
+
+            if (alarm.isEnabled()) scheduleWork(alarm);
+            else clearWork(alarm);
+        }
         // Инициируем обновление
         updateAlarm(alarm);
+
     }
 
     /**
@@ -256,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                 // Если изменный будильник уникален - обновить запись
                 if (!alarmSet.getValue().contains(alarm)) {
                     updateAlarm(alarm);
-                    scheduleWork(alarm);
+                    if (alarm.isEnabled()) scheduleWork(alarm);
                 }
                 else {
                     Toast.makeText(this,

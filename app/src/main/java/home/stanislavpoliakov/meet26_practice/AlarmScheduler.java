@@ -48,11 +48,11 @@ public final class AlarmScheduler {
         // Текущая временная точка (Unix-Time)
         long currentTime = currentMoment.getTimeInMillis();
 
-        // Поскольку работу для звонка создает сама "задача ожидания" - передаем ей необходимые
+        /*// Поскольку работу для звонка создает сама "задача ожидания" - передаем ей необходимые
         // параметры (флаг периодичности)
         Data periodicMarker = new Data.Builder()
                 .putBoolean("isPeriodic", isPeriodic)
-                .build();
+                .build();*/
 
         // Поясню логику создания задачи срабатывания звонка в зависимости от флага периодичности.
         // Если звонок повторяется (например, каждый вторник и четверг), значит мы должны создать
@@ -66,7 +66,7 @@ public final class AlarmScheduler {
         return new OneTimeWorkRequest.Builder(workerClass)
                 .setInitialDelay(Duration.ofMillis(dateTime - currentTime))
                 .addTag(tag)
-                .setInputData(periodicMarker)
+                //.setInputData(periodicMarker)
                 .build();
     }
 
