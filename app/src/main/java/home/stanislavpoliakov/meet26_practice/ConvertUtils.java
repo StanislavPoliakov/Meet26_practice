@@ -83,6 +83,8 @@ public final class ConvertUtils {
             int repeatIn = cursor.getInt(cursor.getColumnIndex(REPEAT_IN));
             String repeatString = cursor.getString(cursor.getColumnIndex(REPEAT_STRING));
 
+            // Поскольку SQLite хранит Boolean в виде Integer (true/false = 1/0),
+            // получаем int значения и преобразуем в соответствующий boolean
             int value = cursor.getInt(cursor.getColumnIndex(VIBRO));
             boolean vibro = (value == 1) ? Boolean.TRUE : Boolean.FALSE;
 

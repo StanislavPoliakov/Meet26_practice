@@ -28,6 +28,7 @@ import java.util.LongSummaryStatistics;
 import java.util.stream.Collectors;
 
 //import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.makeSingleWork;
+import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.getTextForToast;
 import static home.stanislavpoliakov.meet26_practice.ConvertUtils.convertAlarmToValues;
 import static home.stanislavpoliakov.meet26_practice.ConvertUtils.convertCursorToAlarmSet;
 import static home.stanislavpoliakov.meet26_practice.AlarmScheduler.makeRepeatDateSet;
@@ -215,69 +216,6 @@ public class MainActivity extends AppCompatActivity implements ICallback{
         updateAlarm(alarm);
     }
 
-    private void scheduleWork(Alarm alarm) {
-        String tag = alarm.getTag();
-        boolean isPeriodic = alarm.getRepeatIn() != 0;
-
-        /*if (alarm.getRepeatIn() != 0) {
-
-            LongSummaryStatistics summary = makeRepeatDateSet(alarm).stream()
-                    .peek(date -> makeWorkChain(date, tag, isPeriodic))
-                    .collect(Collectors.summarizingLong(Calendar::getTimeInMillis));
-
-            makeToast(summary.getMin());
-        } else {
-            makeSingleWork(alarm.getStart(), alarm.getTag());
-            makeToast(alarm.getStart().getTimeInMillis());
-        }*/
-
-        //start.set
-
-        LongSummaryStatistics summary = makeRepeatDateSet(alarm).stream()
-                .peek(date -> makeWorkChain(date, tag, isPeriodic))
-                .collect(Collectors.summarizingLong(Calendar::getTimeInMillis));
-
-        makeToast(summary.getMin());
-    }
-
-
-
-    private void makeToast(long startTime) {
-        Calendar moment = Calendar.getInstance();
-
-        long delay = (startTime - moment.getTimeInMillis()) / 1000;
-
-        long seconds = delay % 60;
-        delay /= 60;
-
-        long minutes = delay % 60;
-        delay /= 60;
-
-        long hours = delay % 24;
-        delay /= 24;
-
-        long days = delay % 365;
-
-        StringBuilder toastBuilder = new StringBuilder("Будильник сработает через: ");
-
-        if (days == 0 && hours == 0 && minutes == 0)
-            toastBuilder.append(seconds).append(" секунд");
-        else if (days == 0 && hours == 0)
-            toastBuilder.append(minutes).append(" минут и ").append(seconds).append(" секунд");
-        else if (days == 0)
-            toastBuilder.append(hours).append(" часов и ").append(minutes).append(" минут");
-        else
-            toastBuilder.append(days).append(" дней, ").append(hours).append(" часов и ").append(minutes).append(" минут");
-
-        Toast.makeText(this, toastBuilder.toString(), Toast.LENGTH_SHORT).show();
-    }
-
-
-
-    private void clearWork(Alarm alarm) {
-        workManager.cancelAllWorkByTag(alarm.getTag());
-    }
-
     /**
      * Метод обработки результата запуска Activity для создания / изменения будильника
      * @param requestCode код запроса
@@ -298,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
             alarm.setRepeatIn(data.getIntExtra("repeatIn", 0));
             if (requestCode == CREATE_REQUEST) {
 
-                // Если множество содержит такой будильник (здравствуй, Equals и HashCode), то добавить в базу
+                // Если множество не содержит такой будильник (здравствуй, Equals и HashCode), то добавить в базу
                 if (!alarmSet.getValue().contains(alarm)) {
                     insertAlarm(alarm);
                     scheduleWork(alarm);
@@ -316,7 +254,10 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                 alarm.setEnabled(data.getBooleanExtra("enabled", false));
 
                 // Если изменный будильник уникален - обновить запись
-                if (!alarmSet.getValue().contains(alarm)) updateAlarm(alarm);
+                if (!alarmSet.getValue().contains(alarm)) {
+                    updateAlarm(alarm);
+                    scheduleWork(alarm);
+                }
                 else {
                     Toast.makeText(this,
                             "Будильник с такими параметрами уже существует", Toast.LENGTH_SHORT).show();
@@ -324,6 +265,60 @@ public class MainActivity extends AppCompatActivity implements ICallback{
                 }
             }
         }
+    }
+
+    /**
+     * Метод планировки звонков будильника
+     * Мы всегда будем создавать пару отложенных задач для одного звонка. Например, у нас будильник
+     * на 09:00, который повторяется каждые вторник и четверг. Для каждого звонка (вторник или четверг,
+     * или если будильник не имеет повторения) пара состоит из:
+     * 1. Задачи, которая "ждет" время срабатывания = OneTimeRequest
+     * 2. Задачи, которая срабатывает (и повторяется, если необходимо) = PeriodicTimeRequest
+     * @param alarm будильник, звонки которого необходимо запланировать
+     */
+    private void scheduleWork(Alarm alarm) {
+        // Очищаем все запланированные звонки для данного будильника
+        clearWork(alarm);
+
+        // Получаем тэг будильника
+        String tag = alarm.getTag();
+
+        // Если паттерн повторений пуст - звонок единоразовый, если нет - повторяющийся
+        boolean isPeriodic = alarm.getRepeatIn() != 0;
+
+        // Собираем статистику времени включения звонков, и отлавливаем минимальное значение.
+        // Зачем это нужно: предположим, что сегодня - вторник, а будильник у нас стоит на
+        // четверг, пятницу и понедельник. После установки будильника мы хотим увидеть Toast, который
+        // скажет нам сколько времени осталось до ближайшего будильника. Ближайший - это четверг, то
+        // есть тот звонок, время которого (timeInMillis) минимально.
+        // Собриаем статистику Stream и получаем минимальное значение
+
+        // По очереди: парсим паттерн повторений и получаем множество дат, согласно паттерну ->
+        // для каждой даты создаем пары запланированных действий ->
+        // собираем статистику по датам в формате TimeInMillis (long)
+        LongSummaryStatistics summary = makeRepeatDateSet(alarm).stream()
+                .peek(date -> makeWorkChain(date, tag, isPeriodic))
+                .collect(Collectors.summarizingLong(Calendar::getTimeInMillis));
+
+        // Выводим оставшееся время до ближайшего звонка
+        makeToast(summary.getMin());
+    }
+
+    /**
+     * Сбрасываем все запланированные задачи для конкретного будильника (по тэгу)
+     * @param alarm
+     */
+    private void clearWork(Alarm alarm) {
+        workManager.cancelAllWorkByTag(alarm.getTag());
+    }
+
+    /**
+     * Формируем информацию об оставшемся времени до ближайшего будильника и выводим на экран
+     * @param startTime время звонка в милисекундах (Unix-Time)
+     */
+    private void makeToast(long startTime) {
+        String text = getTextForToast(startTime);
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 
     /**

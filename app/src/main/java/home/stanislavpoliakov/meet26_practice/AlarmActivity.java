@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Switch;
@@ -18,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringJoiner;
@@ -52,6 +54,10 @@ public class AlarmActivity extends AppCompatActivity {
 
     // Цвет нажатой кнопки
     private int pressedColor = Color.RED;
+
+    // Флаг смещения даты. True - если мы пытаемся выбрать момент в прошлом. Инициализируется
+    // при открытии Activity
+    private boolean isShifted;
 
     /**
      * Определяем Listener для кнопок паттерна повторений
@@ -117,9 +123,14 @@ public class AlarmActivity extends AppCompatActivity {
         // Устанавилваем значения
         calendar.set(year, month, day);
 
+        // Проверяем установленное время (не установили ли мы время в прошлое)
+        checkDate(calendar);
+
         // Возвращаем объект
         alarmDate.setValue(calendar);
     });
+
+   // private void shift(int offset)
 
     public static Intent newIntent(Context context) {
         return new Intent(context, AlarmActivity.class);
@@ -150,6 +161,9 @@ public class AlarmActivity extends AppCompatActivity {
 
         // Получаем текущую временную точку
         timestamp = Calendar.getInstance();
+
+        // Инициализируем флаг смещения
+        isShifted = false;
 
         // Инициализируем паттерн нулем
         repeatIn.setValue(0);
@@ -357,6 +371,9 @@ public class AlarmActivity extends AppCompatActivity {
             calendar.set(Calendar.HOUR_OF_DAY, hour);
             calendar.set(Calendar.MINUTE, minute);
 
+            // Проверяем установленное время (не установили ли мы время в прошлое)
+            checkDate(calendar);
+
             // Поскольку время мы берем "поминутно" - устанавливаем количество секунд в "0"
             calendar.set(Calendar.SECOND, 0);
 
@@ -373,6 +390,35 @@ public class AlarmActivity extends AppCompatActivity {
 
         // Обрабатываем нажатие на кнопку выбора даты
         dateButton.setOnClickListener(view -> datePickerDialog.show());
+    }
+
+    /**
+     * Метод проверки установленного времени
+     * Проверяем, на задали ли мы временную точку в прошлом.
+     * @param calendar установливаемая точка на временной оси
+     */
+    private void checkDate(Calendar calendar) {
+
+        // Если устанавливаемая временная точка (в милисекундах) меньше текущего момента времени -
+        // - меняем дату на завтрашнее число.
+        // Также устанавливаем флаг переключения даты. Потому что иначе "на сегодня" будильник не
+        // поставить (если не менять начальные значения TimePicker'-а, изменение которых приведет
+        // к неудобству пользования, потому что начальные значения в 06:00 - привычнее для конечного
+        // пользователя
+        if (calendar.getTimeInMillis() < timestamp.getTimeInMillis()) {
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) + 1);
+            isShifted = true;
+        }
+
+        // Если мы сместили дату (флаг = true), но потом выбрали время (час и минуту), которые, если бы
+        // дата не была смещена, описывало бы момент в будущем, смещаем дату назад и сбрасываем флаг
+        if (isShifted &&
+                (calendar.get(Calendar.HOUR_OF_DAY) > timestamp.get(Calendar.HOUR_OF_DAY) ||
+                        (calendar.get(Calendar.HOUR_OF_DAY) == timestamp.get(Calendar.HOUR_OF_DAY)
+                                && calendar.get(Calendar.MINUTE) > timestamp.get(Calendar.MINUTE)))) {
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) - 1);
+            isShifted = false;
+        }
     }
 
     /**
