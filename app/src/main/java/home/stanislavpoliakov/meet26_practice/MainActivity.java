@@ -298,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
 
         // Получаем тэг будильника
         String tag = alarm.getTag();
-        Log.d(TAG, "scheduleWork: " + tag);
+        //Log.d(TAG, "scheduleWork: " + tag);
 
         // Если паттерн повторений пуст - звонок единоразовый, если нет - повторяющийся
         boolean isPeriodic = alarm.getRepeatIn() != 0;

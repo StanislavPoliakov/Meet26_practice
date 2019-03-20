@@ -32,7 +32,7 @@ public final class AlarmScheduler {
 
         // Получаем "задачу ожидания"
         OneTimeWorkRequest delay = getDelayWork(date, tag, isPeriodic);
-        Log.d(TAG, "makeWorkChain: tag = " + tag);
+        //Log.d(TAG, "makeWorkChain: tag = " + tag);
         // Запускаем в работу
         workManager.enqueue(delay);
     }

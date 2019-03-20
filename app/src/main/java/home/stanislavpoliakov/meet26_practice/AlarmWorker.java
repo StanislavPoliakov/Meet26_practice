@@ -103,7 +103,7 @@ public class AlarmWorker extends Worker {
             i += 10;
             notification.setProgress(100, i, false);
             notificationManager.notify(1, notification.build());
-            Log.d(TAG, "alarmWork: tag = " + tag);
+            //Log.d(TAG, "alarmWork: tag = " + tag);
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
@@ -141,8 +141,8 @@ public class AlarmWorker extends Worker {
         Intent deleteIntent = new Intent(context, MyReceiver.class);
         deleteIntent.setAction("STOP");
         deleteIntent.putExtra("TAG", tag);
-        Log.d(TAG, "makeNotification: deleteIntent = " + deleteIntent);
-        PendingIntent deletePendingIntent = PendingIntent.getBroadcast(context, 0, deleteIntent, 0);
+        //Log.d(TAG, "makeNotification: deleteIntent = " + deleteIntent);
+        PendingIntent deletePendingIntent = PendingIntent.getBroadcast(context, 0, deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
