@@ -69,6 +69,8 @@ public final class AlarmScheduler {
         Class<? extends ListenableWorker> workerClass = (isPeriodic) ? DelayWorker.class : AlarmWorker.class;
 
         return new OneTimeWorkRequest.Builder(workerClass)
+
+                //TODO включить для отложенной запланированной работы
                 //.setInitialDelay(Duration.ofMillis(dateTime - currentTime))
                 .addTag(tag)
                 .setInputData(vibroMarker)

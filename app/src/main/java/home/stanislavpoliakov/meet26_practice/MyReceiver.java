@@ -17,6 +17,8 @@ public class MyReceiver extends BroadcastReceiver {
 
         if ("STOP".equals(intent.getAction())) {
             String tag = intent.getStringExtra("TAG");
+            Log.d(TAG, "onReceive: " + tag);
+            Log.d(TAG, "onReceive: receiverIntent = " + intent);
             workManager.cancelAllWork(); // Отправляю один String, а получаю внезапно другой!!!
             workManager.cancelAllWorkByTag(tag);
         }

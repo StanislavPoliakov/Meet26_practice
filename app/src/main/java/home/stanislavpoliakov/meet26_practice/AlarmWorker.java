@@ -141,6 +141,7 @@ public class AlarmWorker extends Worker {
         Intent deleteIntent = new Intent(context, MyReceiver.class);
         deleteIntent.setAction("STOP");
         deleteIntent.putExtra("TAG", tag);
+        Log.d(TAG, "makeNotification: deleteIntent = " + deleteIntent);
         PendingIntent deletePendingIntent = PendingIntent.getBroadcast(context, 0, deleteIntent, 0);
 
         return new NotificationCompat.Builder(context, CHANNEL_ID)

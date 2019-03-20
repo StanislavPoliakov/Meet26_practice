@@ -16,6 +16,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.ArraySet;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -297,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
 
         // Получаем тэг будильника
         String tag = alarm.getTag();
+        Log.d(TAG, "scheduleWork: " + tag);
 
         // Если паттерн повторений пуст - звонок единоразовый, если нет - повторяющийся
         boolean isPeriodic = alarm.getRepeatIn() != 0;
