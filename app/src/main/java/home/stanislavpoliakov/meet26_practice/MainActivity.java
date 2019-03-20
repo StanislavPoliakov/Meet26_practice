@@ -5,6 +5,7 @@ import android.arch.lifecycle.Observer;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -54,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements ICallback{
     private MutableLiveData<ArraySet<Alarm>> alarmSet = new MutableLiveData<>();
     private MyAdapter mAdapter;
 
+    private MyReceiver mReciever;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements ICallback{
      * Метод общей инициализации
      */
     private void init() {
+        mReciever = new MyReceiver();
+
         noAlarmsLabel = findViewById(R.id.noAlarmsLabel);
 
         contentResolver = getContentResolver();
@@ -210,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements ICallback{
 
         // Если время будильника прошло, то при попытке изменить положение выключателя
         // вызвать предупреждение и заблокировать переключатель в "Выключено"
-        if (alarm.getStart().getTimeInMillis() < Calendar.getInstance().getTimeInMillis()) {
+        if (alarm.getRepeatIn() == 0 && alarm.getStart().getTimeInMillis() < Calendar.getInstance().getTimeInMillis()) {
             Toast.makeText(this, "Alarm expired!", Toast.LENGTH_SHORT).show();
             alarm.setEnabled(false);
 
@@ -456,5 +461,17 @@ public class MainActivity extends AppCompatActivity implements ICallback{
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        registerReceiver(mReciever, new IntentFilter());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReciever);
     }
 }

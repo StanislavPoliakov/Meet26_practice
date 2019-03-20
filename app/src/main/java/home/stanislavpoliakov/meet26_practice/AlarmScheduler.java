@@ -1,6 +1,9 @@
 package home.stanislavpoliakov.meet26_practice;
 
+import android.util.Log;
+
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -14,7 +17,9 @@ import java.util.Set;
  * Класс-помощник для планирования задач будильника
  */
 public final class AlarmScheduler {
+    private static final String TAG = "meet26_logs";
     private static WorkManager workManager = WorkManager.getInstance();
+    private static boolean vibroMode;
 
     /**
      * Метод для создания запланированных звонков
@@ -27,7 +32,7 @@ public final class AlarmScheduler {
 
         // Получаем "задачу ожидания"
         OneTimeWorkRequest delay = getDelayWork(date, tag, isPeriodic);
-
+        Log.d(TAG, "makeWorkChain: tag = " + tag);
         // Запускаем в работу
         workManager.enqueue(delay);
     }
@@ -48,11 +53,11 @@ public final class AlarmScheduler {
         // Текущая временная точка (Unix-Time)
         long currentTime = currentMoment.getTimeInMillis();
 
-        /*// Поскольку работу для звонка создает сама "задача ожидания" - передаем ей необходимые
+        // Поскольку работу для звонка создает сама "задача ожидания" - передаем ей необходимые
         // параметры (флаг периодичности)
-        Data periodicMarker = new Data.Builder()
-                .putBoolean("isPeriodic", isPeriodic)
-                .build();*/
+        Data vibroMarker = new Data.Builder()
+                .putBoolean("isVibro", vibroMode)
+                .build();
 
         // Поясню логику создания задачи срабатывания звонка в зависимости от флага периодичности.
         // Если звонок повторяется (например, каждый вторник и четверг), значит мы должны создать
@@ -64,9 +69,9 @@ public final class AlarmScheduler {
         Class<? extends ListenableWorker> workerClass = (isPeriodic) ? DelayWorker.class : AlarmWorker.class;
 
         return new OneTimeWorkRequest.Builder(workerClass)
-                .setInitialDelay(Duration.ofMillis(dateTime - currentTime))
+                //.setInitialDelay(Duration.ofMillis(dateTime - currentTime))
                 .addTag(tag)
-                //.setInputData(periodicMarker)
+                .setInputData(vibroMarker)
                 .build();
     }
 
@@ -76,6 +81,7 @@ public final class AlarmScheduler {
      * @return множество дат
      */
     public static Set<Calendar> makeRepeatDateSet(Alarm alarm) {
+        vibroMode = alarm.isVibro();
 
         // Получаем значение паттерна повторений
         int repeatIn = alarm.getRepeatIn();
